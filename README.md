@@ -1,0 +1,2 @@
+# quantum_ai
+trading
