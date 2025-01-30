@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: quantum-trading-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ANGEL_API_KEY=${ANGEL_API_KEY}
+      - ANGEL_CLIENT_ID=${ANGEL_CLIENT_ID}
+      - ANGEL_PASSWORD=${ANGEL_PASSWORD}
+      - ANGEL_TOTP_KEY=${ANGEL_TOTP_KEY}
+    volumes:
+      - ./backend:/app
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    container_name: quantum-trading-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    name: quantum-trading-network
+    driver: bridge 
